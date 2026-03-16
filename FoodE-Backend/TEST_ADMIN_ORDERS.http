@@ -1,0 +1,130 @@
+### TESTING ADMIN ORDERS ENDPOINT
+
+#### Step 1: Login as Admin
+POST https://localhost:7159/api/auth/login
+Content-Type: application/json
+
+{
+  "Email": "admin@foode.com",
+  "Password": "Admin@123"
+}
+
+Expected Response:
+{
+  "token": "fake-jwt-token-1",
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@foode.com",
+    "role": "admin"
+  }
+}
+
+Save the token!
+
+---
+
+#### Step 2: Get All Orders
+GET https://localhost:7159/api/admin/orders
+Authorization: Bearer fake-jwt-token-1
+Content-Type: application/json
+
+Expected Response (camelCase):
+[
+  {
+    "id": 1,
+    "customerName": "John Doe",
+    "customerEmail": "john@example.com",
+    "customerPhone": "01712345678",
+    "deliveryAddress": "123 Main St, Dhaka",
+    "notes": "Ring doorbell twice",
+    "paymentMethod": "cod",
+    "totalAmount": 850.00,
+    "status": "Pending",
+    "orderDate": "2024-01-15T10:30:00",
+    "items": [
+      {
+        "foodItemName": "Pizza",
+        "name": "Pizza",
+        "quantity": 2,
+        "price": 350.00,
+        "totalPrice": 700.00
+      }
+    ]
+  }
+]
+
+---
+
+#### Step 3: If No Orders Exist, Create One First
+
+##### 3a. Get Available Food Items
+GET https://localhost:7159/api/fooditems
+
+##### 3b. Place an Order (as customer - no auth needed)
+POST https://localhost:7159/api/orders
+Content-Type: application/json
+
+{
+  "CustomerName": "Test Customer",
+  "Email": "test@example.com",
+  "Phone": "01712345678",
+  "Address": "Test Address, Dhaka",
+  "Notes": "Test order",
+  "PaymentMethod": "cod",
+  "Items": [
+    {
+      "FoodItemId": 1,
+      "Quantity": 2
+    }
+  ]
+}
+
+Expected Response:
+{
+  "orderId": 1,
+  "status": "Pending",
+  "totalAmount": 700.00,
+  "orderDate": "2024-01-15T10:30:00",
+  "message": "Order placed successfully"
+}
+
+##### 3c. Now Try Step 2 Again
+GET https://localhost:7159/api/admin/orders
+Authorization: Bearer fake-jwt-token-1
+
+---
+
+#### Troubleshooting
+
+**If you get 401 Unauthorized:**
+- Make sure you're using the correct token from Step 1
+- Token format should be: `Bearer fake-jwt-token-1`
+- Make sure admin user exists in database
+
+**If you get empty array []:**
+- No orders exist in database
+- Follow Step 3 to create a test order first
+
+**If properties are PascalCase (Id, CustomerName, etc.):**
+- Backend needs to be restarted after Program.cs changes
+- Close and restart Visual Studio / dotnet run
+
+**If items array is empty or missing:**
+- Check OrderItems table in database
+- Verify order was created properly with items
+
+**SQL to Check Database:**
+```sql
+-- Check if orders exist
+SELECT * FROM Orders;
+
+-- Check order items
+SELECT * FROM OrderItems;
+
+-- Check admin user
+SELECT * FROM Users WHERE Role = 'admin';
+
+-- Check food items
+SELECT * FROM FoodItems WHERE IsAvailable = 1;
+```

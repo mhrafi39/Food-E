@@ -1,0 +1,76 @@
+[
+  {
+    "name": "Margherita Pizza",
+    "description": "Classic pizza with fresh tomatoes, mozzarella, and basil",
+    "price": 12.99,
+    "category": "Pizza",
+    "imageUrl": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002",
+    "isAvailable": true,
+    "isDeal": false
+  },
+  {
+    "name": "Pepperoni Pizza",
+    "description": "Traditional pizza topped with pepperoni slices",
+    "price": 14.99,
+    "category": "Pizza",
+    "imageUrl": "https://images.unsplash.com/photo-1628840042765-356cda07504e",
+    "isAvailable": true,
+    "isDeal": true,
+    "originalPrice": 18.99
+  },
+  {
+    "name": "Chicken Burger",
+    "description": "Juicy grilled chicken with lettuce, tomato, and special sauce",
+    "price": 9.99,
+    "category": "Burgers",
+    "imageUrl": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd",
+    "isAvailable": true,
+    "isDeal": false
+  },
+  {
+    "name": "Beef Burger",
+    "description": "Classic beef patty with cheese and fresh vegetables",
+    "price": 11.99,
+    "category": "Burgers",
+    "imageUrl": "https://images.unsplash.com/photo-1550547660-d9450f859349",
+    "isAvailable": true,
+    "isDeal": false
+  },
+  {
+    "name": "Caesar Salad",
+    "description": "Fresh romaine lettuce with Caesar dressing and croutons",
+    "price": 7.99,
+    "category": "Salads",
+    "imageUrl": "https://images.unsplash.com/photo-1546793665-c74683f339c1",
+    "isAvailable": true,
+    "isDeal": false
+  },
+  {
+    "name": "Pasta Carbonara",
+    "description": "Creamy pasta with bacon and parmesan cheese",
+    "price": 13.99,
+    "category": "Pasta",
+    "imageUrl": "https://images.unsplash.com/photo-1612874742237-6526221588e3",
+    "isAvailable": true,
+    "isDeal": true,
+    "originalPrice": 16.99
+  },
+  {
+    "name": "Chocolate Cake",
+    "description": "Rich chocolate cake with chocolate frosting",
+    "price": 5.99,
+    "category": "Desserts",
+    "imageUrl": "https://images.unsplash.com/photo-1578985545062-69928b1d9587",
+    "isAvailable": true,
+    "isDeal": false
+  },
+  {
+    "name": "Coca Cola",
+    "description": "Refreshing cold beverage",
+    "price": 2.99,
+    "category": "Drinks",
+    "imageUrl": "https://images.unsplash.com/photo-1554866585-cd94860890b7",
+    "isAvailable": true,
+    "isDeal": false
+  }
+]

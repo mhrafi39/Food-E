@@ -1,0 +1,6 @@
+@FoodE_Backend_HostAddress = http://localhost:5289
+
+GET {{FoodE_Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
