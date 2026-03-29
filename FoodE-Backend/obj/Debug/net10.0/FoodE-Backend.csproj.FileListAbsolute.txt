@@ -169,3 +169,4 @@ C:\Users\Rafi\source\repos\FoodE-Backend\FoodE-Backend\bin\Debug\net10.0\TestDat
 C:\Users\Rafi\source\repos\FoodE-Backend\FoodE-Backend\bin\Debug\net10.0\TestData\AdminLogin.json
 C:\Users\Rafi\source\repos\FoodE-Backend\FoodE-Backend\bin\Debug\net10.0\TestData\CreateAdminUser.json
 C:\Users\Rafi\source\repos\FoodE-Backend\FoodE-Backend\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+C:\Users\Rafi\source\repos\FoodE-Backend\FoodE-Backend\obj\Debug\net10.0\FoodE-Backend.sourcelink.json

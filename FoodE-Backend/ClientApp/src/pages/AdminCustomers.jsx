@@ -1,26 +1,48 @@
-import { motion } from 'framer-motion';
 import { Users, Mail, Phone, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import adminApi from '../utils/adminApi';
 
 const AdminCustomers = () => {
-  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
   const fetchCustomers = async () => {
     setLoading(true);
-    const result = await adminApi.getAllCustomers();
-    if (result.success) {
-      setCustomers(result.data);
+    // Get users and orders to calculate total spent
+    const usersResult = await adminApi.getAllCustomers();
+    const ordersResult = await adminApi.getAllOrders();
+
+    if (usersResult.success && ordersResult.success) {
+      const customers = usersResult.data;
+      const orders = ordersResult.data || [];
+
+      // Calculate total spent per customer
+      const customersWithSpent = customers
+        .filter(user => user.role === 'user') // Only include regular users
+        .map(customer => {
+          const customerOrders = orders.filter(order => 
+            order.customerEmail?.toLowerCase() === customer.email?.toLowerCase() ||
+            order.customerName === customer.name
+          );
+          const totalSpent = customerOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+
+          return {
+            ...customer,
+            totalSpent: totalSpent || 0,
+            orderCount: customerOrders.length
+          };
+        })
+        .sort((a, b) => b.totalSpent - a.totalSpent); // Sort by total spent descending
+
+      setCustomers(customersWithSpent);
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchCustomers();
+  }, []);
 
   if (loading) {
     return (
@@ -48,13 +70,7 @@ const AdminCustomers = () => {
         {/* Customers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {customers.map((customer, index) => (
-            <motion.div
-              key={customer.id}
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.05 }}
-              className="glass rounded-2xl p-6"
-            >
+            <div className="glass rounded-2xl p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center">
                   <span className="text-xl font-bold text-brand">
@@ -62,7 +78,7 @@ const AdminCustomers = () => {
                   </span>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-brand">৳{customer.totalSpent.toFixed(2)}</p>
+                  <p className="text-2xl font-black text-brand">৳{(customer.totalSpent || 0).toFixed(2)}</p>
                   <p className="text-xs text-white/60">Total Spent</p>
                 </div>
               </div>
@@ -98,7 +114,7 @@ const AdminCustomers = () => {
                   <span className="font-bold">{customer.orderCount}</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -109,7 +125,7 @@ const AdminCustomers = () => {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 

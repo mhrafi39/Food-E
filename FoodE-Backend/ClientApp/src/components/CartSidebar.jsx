@@ -1,5 +1,5 @@
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -120,14 +120,22 @@ const CartSidebar = () => {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() =>
-                                updateQuantity(item.id, item.quantity + 1)
-                              }
-                              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                              onClick={() => {
+                                if (item.quantity + 1 > item.preparedStock) {
+                                  alert(`Cannot add more. Only ${item.preparedStock} of "${item.name}" available.`);
+                                  return;
+                                }
+                                updateQuantity(item.id, item.quantity + 1);
+                              }}
+                              disabled={item.quantity >= item.preparedStock}
+                              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <Plus className="w-4 h-4" />
                             </button>
                           </div>
+                          {item.quantity > item.preparedStock && (
+                            <p className="text-xs text-red-400 mt-2">⚠️ Quantity exceeds available stock</p>
+                          )}
                         </div>
 
                         {/* Remove Button */}

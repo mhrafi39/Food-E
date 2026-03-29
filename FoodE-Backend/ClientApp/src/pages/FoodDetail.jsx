@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -16,16 +15,17 @@ const FoodDetail = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
 
-  // Fetch item details from backend
-  useEffect(() => {
+   // Fetch item details from backend
+   useEffect(() => {
     const fetchItemDetails = async () => {
       setLoading(true);
+      setQuantity(1); // Reset quantity when fetching new item
       try {
         // Fetch the specific item
         const itemResult = await api.getFoodItem(id);
         if (itemResult.success) {
           setItem(itemResult.data);
-          
+
           // Fetch all items to get similar ones from same category
           const allItemsResult = await api.getFoodItems();
           if (allItemsResult.success) {
@@ -91,6 +91,12 @@ const FoodDetail = () => {
   };
 
   const handleAddToCart = () => {
+    // Validate quantity against prepared stock
+    if (quantity > item.preparedStock) {
+      alert(`Cannot add ${quantity} items. Only ${item.preparedStock} available in stock.`);
+      return;
+    }
+
     for (let i = 0; i < quantity; i++) {
       addToCart(item);
     }
@@ -176,12 +182,21 @@ const FoodDetail = () => {
                 </button>
                 <span className="text-2xl font-bold w-12 text-center">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-12 h-12 rounded-lg glass hover:bg-white/10 transition-colors flex items-center justify-center"
+                  onClick={() => {
+                    const maxQuantity = item.preparedStock || 0;
+                    if (quantity < maxQuantity) {
+                      setQuantity(quantity + 1);
+                    }
+                  }}
+                  disabled={quantity >= (item.preparedStock || 0)}
+                  className="w-12 h-12 rounded-lg glass hover:bg-white/10 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-5 h-5" />
                 </button>
               </div>
+              <p className="text-sm text-white/60 mt-2">
+                Available: {item.preparedStock || 0} {(item.preparedStock || 0) === 1 ? 'item' : 'items'}
+              </p>
             </div>
 
             {/* Total & Add to Cart */}
@@ -193,19 +208,21 @@ const FoodDetail = () => {
 
               <button
                 onClick={handleAddToCart}
-                disabled={!item.isAvailable}
+                disabled={!item.isAvailable || quantity > item.preparedStock}
                 className="w-full py-4 gradient-brand rounded-xl font-bold text-lg shadow-lg shadow-brand/50 hover:shadow-brand/70 transition-all hover:scale-105 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 <ShoppingCart className="w-6 h-6" />
-                <span>{item.isAvailable ? 'Add to Cart' : 'Currently Unavailable'}</span>
+                <span>{!item.isAvailable ? 'Currently Unavailable' : quantity > item.preparedStock ? 'Quantity Exceeds Available Stock' : 'Add to Cart'}</span>
               </button>
 
               {/* Availability Status */}
               <div className="mt-4 text-center">
-                {item.isAvailable ? (
-                  <span className="text-green-400 text-sm">✓ Available Now</span>
-                ) : (
+                {!item.isAvailable ? (
                   <span className="text-red-400 text-sm">✗ Out of Stock</span>
+                ) : quantity > item.preparedStock ? (
+                  <span className="text-orange-400 text-sm">⚠ Requested quantity exceeds available stock</span>
+                ) : (
+                  <span className="text-green-400 text-sm">✓ Available Now</span>
                 )}
               </div>
             </div>

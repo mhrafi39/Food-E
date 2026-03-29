@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Save, ArrowLeft, ArrowRight, Plus, Trash2, Calculator } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
@@ -135,6 +135,14 @@ const ItemForm = () => {
       }
     }
     setRecipe(updated);
+  };
+
+  const hasInvalidIngredients = () => {
+    if (formData.isDirectPurchase || recipe.length === 0) return false;
+    return recipe.some(ing => {
+      const qty = typeof ing.quantityNeeded === 'number' ? ing.quantityNeeded : parseFloat(ing.quantityNeeded);
+      return isNaN(qty) || qty <= 0 || ing.quantityNeeded === '';
+    });
   };
 
   const handleNext = (e) => {
@@ -311,10 +319,10 @@ const ItemForm = () => {
                       required
                       value={formData.category}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand"
+                      className="w-full px-4 py-3 bg-white/10 border border-brand/50 rounded-lg focus:outline-none focus:border-brand text-white font-medium"
                     >
                       {categories.map((cat) => (
-                        <option key={cat} value={cat}>
+                        <option key={cat} value={cat} className="bg-matte text-white">
                           {cat}
                         </option>
                       ))}
@@ -434,20 +442,27 @@ const ItemForm = () => {
                   ) : (
                     /* Recipe Builder */
                     <div className="space-y-4">
+                      {hasInvalidIngredients() && (
+                        <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm flex items-start">
+                          <span className="mr-2">⚠️</span>
+                          <span>All ingredients must have a quantity greater than 0</span>
+                        </div>
+                      )}
                       {recipe.map((ingredient, index) => {
                         const material = materials.find(m => m.id === ingredient.rawMaterialId);
                         const ingredientCost = material ? material.costPerUnit * ingredient.quantityNeeded : 0;
+                        const isInvalidQty = ingredient.quantityNeeded === '' || isNaN(parseFloat(ingredient.quantityNeeded)) || parseFloat(ingredient.quantityNeeded) <= 0;
 
                         return (
-                          <div key={index} className="flex items-center space-x-3 p-4 bg-white/5 rounded-lg">
+                          <div key={index} className={`flex items-center space-x-3 p-4 rounded-lg transition-colors ${isInvalidQty ? 'bg-red-500/10 border border-red-500/30' : 'bg-white/5'}`}>
                             <div className="flex-1">
                               <select
                                 value={ingredient.rawMaterialId}
                                 onChange={(e) => updateIngredient(index, 'rawMaterialId', e.target.value)}
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand"
+                                className="w-full px-3 py-2 bg-white/10 border border-brand/50 rounded-lg focus:outline-none focus:border-brand text-white font-medium"
                               >
                                 {materials.map((mat) => (
-                                  <option key={mat.id} value={mat.id}>
+                                  <option key={mat.id} value={mat.id} className="bg-matte text-white">
                                     {mat.name} (৳{mat.costPerUnit}/{mat.unit})
                                   </option>
                                 ))}
@@ -460,7 +475,11 @@ const ItemForm = () => {
                                 min="0.01"
                                 value={ingredient.quantityNeeded || ''}
                                 onChange={(e) => updateIngredient(index, 'quantityNeeded', e.target.value)}
-                                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand"
+                                className={`w-full px-3 py-2 rounded-lg focus:outline-none transition-colors ${
+                                  isInvalidQty
+                                    ? 'bg-red-500/20 border border-red-500/50 text-white'
+                                    : 'bg-white/5 border border-white/10 focus:border-brand'
+                                }`}
                                 placeholder="Qty"
                                 required
                               />
@@ -534,7 +553,7 @@ const ItemForm = () => {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading || (!formData.isDirectPurchase && recipe.length === 0)}
+                    disabled={loading || (!formData.isDirectPurchase && recipe.length === 0) || hasInvalidIngredients()}
                     className="gradient-brand px-8 py-3 rounded-lg font-semibold flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (

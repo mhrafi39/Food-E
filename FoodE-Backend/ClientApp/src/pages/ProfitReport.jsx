@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { TrendingUp, DollarSign, Package, Calendar } from 'lucide-react';
 import adminApi from '../utils/adminApi';
 import { Line } from 'react-chartjs-2';
@@ -11,13 +10,9 @@ const ProfitReport = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
-  useEffect(() => {
-    fetchProfitData();
-  }, [selectedDate]);
-
   const fetchProfitData = async () => {
     setLoading(true);
-    
+
     // Fetch daily profit
     const dailyResult = await adminApi.getDailyProfit(selectedDate);
     if (dailyResult.success) {
@@ -31,18 +26,30 @@ const ProfitReport = () => {
     }
 
     // Fetch materials usage
-    const endDate = new Date(selectedDate);
-    endDate.setDate(endDate.getDate() + 1);
-    const materialsResult = await adminApi.getMaterialsUsage(
-      selectedDate,
-      endDate.toISOString().split('T')[0]
-    );
-    if (materialsResult.success) {
-      setMaterialsUsage(materialsResult.data);
+    try {
+      const endDate = new Date(selectedDate);
+      endDate.setDate(endDate.getDate() + 1);
+      const materialsResult = await adminApi.getMaterialsUsage(
+        selectedDate,
+        endDate.toISOString().split('T')[0]
+      );
+      if (materialsResult.success) {
+        setMaterialsUsage(materialsResult.data);
+      } else {
+        console.warn('Materials usage fetch failed:', materialsResult.error);
+        setMaterialsUsage({ materialsUsed: [], totalMaterialCost: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching materials usage:', error);
+      setMaterialsUsage({ materialsUsed: [], totalMaterialCost: 0 });
     }
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchProfitData();
+  }, [selectedDate]);
 
   if (loading) {
     return (

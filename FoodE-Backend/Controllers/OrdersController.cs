@@ -144,44 +144,12 @@ namespace FoodE_Backend.Controllers
                 // Check if we have enough prepared stock
                 if (foodItem.PreparedStock < itemDto.Quantity)
                 {
-                    // Not enough prepared - try to make more if we have raw materials
-                    if (foodItem.Recipe != null && foodItem.Recipe.Ingredients.Any())
+                    Console.WriteLine($"ERROR: Insufficient prepared stock for {foodItem.Name}");
+                    return BadRequest(new
                     {
-                        int needToPrepare = itemDto.Quantity - foodItem.PreparedStock;
-                        Console.WriteLine($"Auto-preparing {needToPrepare} units of {foodItem.Name}");
-
-                        // Check if we have enough raw materials
-                        foreach (var ingredient in foodItem.Recipe.Ingredients)
-                        {
-                            var requiredQty = ingredient.QuantityNeeded * needToPrepare;
-                            if (ingredient.RawMaterial.CurrentStock < requiredQty)
-                            {
-                                Console.WriteLine($"ERROR: Insufficient raw material {ingredient.RawMaterial.Name}");
-                                return BadRequest(new
-                                {
-                                    message = $"Insufficient stock for {foodItem.Name}",
-                                    details = $"Only {foodItem.PreparedStock} prepared. Need {needToPrepare} more but insufficient raw materials: {ingredient.RawMaterial.Name} (need {requiredQty} {ingredient.RawMaterial.Unit}, have {ingredient.RawMaterial.CurrentStock} {ingredient.RawMaterial.Unit})"
-                                });
-                            }
-                        }
-
-                        // Auto-prepare: Deduct raw materials and increment prepared stock
-                        foreach (var ingredient in foodItem.Recipe.Ingredients)
-                        {
-                            ingredient.RawMaterial.CurrentStock -= ingredient.QuantityNeeded * needToPrepare;
-                        }
-                        foodItem.PreparedStock += needToPrepare;
-                        Console.WriteLine($"Auto-prepared {needToPrepare} units. New stock: {foodItem.PreparedStock}");
-                    }
-                    else if (foodItem.IsDirectPurchase)
-                    {
-                        Console.WriteLine($"ERROR: Insufficient stock for direct purchase item {foodItem.Name}");
-                        return BadRequest(new
-                        {
-                            message = $"Insufficient stock for {foodItem.Name}",
-                            details = $"Only {foodItem.PreparedStock} available, order requires {itemDto.Quantity}"
-                        });
-                    }
+                        message = $"Insufficient stock for {foodItem.Name}",
+                        details = $"Only {foodItem.PreparedStock} available, order requires {itemDto.Quantity}"
+                    });
                 }
 
                 // Deduct from prepared stock

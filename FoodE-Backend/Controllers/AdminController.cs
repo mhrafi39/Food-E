@@ -782,41 +782,43 @@ namespace FoodE_Backend.Controllers
             var startDate = targetDate.Date;
             var endDate = targetDate.Date.AddDays(1);
 
-            // Get all orders for the day
+            // Get all orders with items for the day
             var orders = await _context.Orders
                 .Include(o => o.OrderItems)
                 .Where(o => o.OrderDate >= startDate && o.OrderDate < endDate)
                 .ToListAsync();
 
+            // Get all food items with recipes in one query
+            var foodItemIds = orders.SelectMany(o => o.OrderItems).Select(oi => oi.FoodItemId).Distinct().ToList();
+            var foodItems = await _context.FoodItems
+                .Where(f => foodItemIds.Contains(f.Id))
+                .Include(f => f.Recipe)
+                    .ThenInclude(r => r.Ingredients)
+                    .ThenInclude(i => i.RawMaterial)
+                .ToDictionaryAsync(f => f.Id);
+
             decimal totalRevenue = orders.Sum(o => o.TotalAmount);
             decimal totalCost = 0;
-            var itemBreakdown = new List<object>();
+            var itemBreakdownDict = new Dictionary<string, ItemBreakdownItem>();
 
             // Calculate cost for each order item
             foreach (var order in orders)
             {
                 foreach (var orderItem in order.OrderItems)
                 {
-                    var foodItem = await _context.FoodItems
-                        .Include(f => f.Recipe)
-                            .ThenInclude(r => r.Ingredients)
-                            .ThenInclude(i => i.RawMaterial)
-                        .FirstOrDefaultAsync(f => f.Id == orderItem.FoodItemId);
-
-                    if (foodItem == null) continue;
+                    if (!foodItems.TryGetValue(orderItem.FoodItemId, out var foodItem))
+                        continue;
 
                     decimal itemCost = 0;
                     decimal itemProfit = 0;
 
                     if (foodItem.IsDirectPurchase)
                     {
-                        // For direct purchase items like Mojo
                         itemCost = (foodItem.DirectPurchaseCost ?? 0) * orderItem.Quantity;
                         itemProfit = foodItem.ProfitMargin * orderItem.Quantity;
                     }
                     else if (foodItem.Recipe != null)
                     {
-                        // Calculate from recipe
                         itemCost = foodItem.Recipe.Ingredients
                             .Sum(i => i.QuantityNeeded * i.RawMaterial.CostPerUnit) * orderItem.Quantity;
                         itemProfit = (foodItem.Price - foodItem.Recipe.Ingredients
@@ -825,34 +827,39 @@ namespace FoodE_Backend.Controllers
 
                     totalCost += itemCost;
 
-                    // Add to breakdown
-                    var existingItem = itemBreakdown.FirstOrDefault(i =>
-                        ((dynamic)i).foodItemName == orderItem.FoodItemName);
-
-                    if (existingItem != null)
+                    // Add or update in breakdown
+                    if (itemBreakdownDict.TryGetValue(orderItem.FoodItemName, out var existingItem))
                     {
-                        var item = (dynamic)existingItem;
-                        item.quantitySold += orderItem.Quantity;
-                        item.revenue += orderItem.Price * orderItem.Quantity;
-                        item.cost += itemCost;
-                        item.profit += itemProfit;
+                        existingItem.QuantitySold += orderItem.Quantity;
+                        existingItem.Revenue += orderItem.Price * orderItem.Quantity;
+                        existingItem.Cost += itemCost;
+                        existingItem.Profit += itemProfit;
                     }
                     else
                     {
-                        itemBreakdown.Add(new
+                        itemBreakdownDict[orderItem.FoodItemName] = new ItemBreakdownItem
                         {
-                            foodItemId = orderItem.FoodItemId,
-                            foodItemName = orderItem.FoodItemName,
-                            quantitySold = orderItem.Quantity,
-                            revenue = orderItem.Price * orderItem.Quantity,
-                            cost = itemCost,
-                            profit = itemProfit
-                        });
+                            FoodItemId = orderItem.FoodItemId,
+                            FoodItemName = orderItem.FoodItemName,
+                            QuantitySold = orderItem.Quantity,
+                            Revenue = orderItem.Price * orderItem.Quantity,
+                            Cost = itemCost,
+                            Profit = itemProfit
+                        };
                     }
                 }
             }
 
             decimal totalProfit = totalRevenue - totalCost;
+            var itemBreakdown = itemBreakdownDict.Values.Select(i => new
+            {
+                i.FoodItemId,
+                i.FoodItemName,
+                i.QuantitySold,
+                i.Revenue,
+                i.Cost,
+                i.Profit
+            }).ToList();
 
             return Ok(new
             {
@@ -876,15 +883,32 @@ namespace FoodE_Backend.Controllers
                 return Unauthorized(new { message = "Admin access required" });
 
             var last7Days = new List<object>();
+            decimal totalProfit = 0;
+            decimal totalRevenue = 0;
+            decimal totalCost = 0;
 
             for (int i = 6; i >= 0; i--)
             {
                 var date = DateTime.Today.AddDays(-i);
+
+                // Call GetDailyProfit and extract the result
                 var result = await GetDailyProfit(authorization, date);
 
-                if (result.Result is OkObjectResult okResult)
+                if (result.Result is OkObjectResult okResult && okResult.Value != null)
                 {
-                    last7Days.Add(okResult.Value);
+                    var dailyData = okResult.Value;
+                    last7Days.Add(dailyData);
+
+                    // Extract values from the daily data
+                    if (dailyData is System.Collections.Generic.IDictionary<string, object> dict)
+                    {
+                        if (dict.TryGetValue("totalProfit", out var profitObj) && decimal.TryParse(profitObj?.ToString(), out var profit))
+                            totalProfit += profit;
+                        if (dict.TryGetValue("totalRevenue", out var revenueObj) && decimal.TryParse(revenueObj?.ToString(), out var revenue))
+                            totalRevenue += revenue;
+                        if (dict.TryGetValue("totalCost", out var costObj) && decimal.TryParse(costObj?.ToString(), out var cost))
+                            totalCost += cost;
+                    }
                 }
             }
 
@@ -893,9 +917,9 @@ namespace FoodE_Backend.Controllers
                 weekStart = DateTime.Today.AddDays(-6).ToString("yyyy-MM-dd"),
                 weekEnd = DateTime.Today.ToString("yyyy-MM-dd"),
                 dailyData = last7Days,
-                totalProfit = last7Days.Sum(d => (decimal)((dynamic)d).totalProfit),
-                totalRevenue = last7Days.Sum(d => (decimal)((dynamic)d).totalRevenue),
-                totalCost = last7Days.Sum(d => (decimal)((dynamic)d).totalCost)
+                totalProfit,
+                totalRevenue,
+                totalCost
             });
         }
 
@@ -911,60 +935,74 @@ namespace FoodE_Backend.Controllers
             var start = startDate ?? DateTime.Today;
             var end = endDate ?? DateTime.Today.AddDays(1);
 
-            // Get all orders in date range
+            // Get all orders with items in date range
             var orders = await _context.Orders
                 .Include(o => o.OrderItems)
                 .Where(o => o.OrderDate >= start && o.OrderDate < end)
                 .ToListAsync();
 
-            var materialUsage = new Dictionary<int, dynamic>();
+            // Get all food items with recipes in one query
+            var foodItemIds = orders.SelectMany(o => o.OrderItems).Select(oi => oi.FoodItemId).Distinct().ToList();
+            var foodItems = await _context.FoodItems
+                .Where(f => foodItemIds.Contains(f.Id))
+                .Include(f => f.Recipe)
+                    .ThenInclude(r => r.Ingredients)
+                    .ThenInclude(i => i.RawMaterial)
+                .ToDictionaryAsync(f => f.Id);
+
+            var materialUsageDict = new Dictionary<int, MaterialUsageItem>();
 
             foreach (var order in orders)
             {
                 foreach (var orderItem in order.OrderItems)
                 {
-                    var foodItem = await _context.FoodItems
-                        .Include(f => f.Recipe)
-                            .ThenInclude(r => r.Ingredients)
-                            .ThenInclude(i => i.RawMaterial)
-                        .FirstOrDefaultAsync(f => f.Id == orderItem.FoodItemId);
+                    if (!foodItems.TryGetValue(orderItem.FoodItemId, out var foodItem) || foodItem.Recipe == null)
+                        continue;
 
-                    if (foodItem?.Recipe != null)
+                    foreach (var ingredient in foodItem.Recipe.Ingredients)
                     {
-                        foreach (var ingredient in foodItem.Recipe.Ingredients)
-                        {
-                            var usedQuantity = ingredient.QuantityNeeded * orderItem.Quantity;
-                            var usedCost = usedQuantity * ingredient.RawMaterial.CostPerUnit;
+                        var usedQuantity = ingredient.QuantityNeeded * orderItem.Quantity;
+                        var usedCost = usedQuantity * ingredient.RawMaterial.CostPerUnit;
 
-                            if (materialUsage.ContainsKey(ingredient.RawMaterialId))
+                        if (materialUsageDict.TryGetValue(ingredient.RawMaterialId, out var existingUsage))
+                        {
+                            existingUsage.QuantityUsed += usedQuantity;
+                            existingUsage.TotalCost += usedCost;
+                        }
+                        else
+                        {
+                            materialUsageDict[ingredient.RawMaterialId] = new MaterialUsageItem
                             {
-                                materialUsage[ingredient.RawMaterialId].quantityUsed += usedQuantity;
-                                materialUsage[ingredient.RawMaterialId].totalCost += usedCost;
-                            }
-                            else
-                            {
-                                materialUsage[ingredient.RawMaterialId] = new
-                                {
-                                    materialId = ingredient.RawMaterialId,
-                                    materialName = ingredient.RawMaterial.Name,
-                                    unit = ingredient.RawMaterial.Unit,
-                                    costPerUnit = ingredient.RawMaterial.CostPerUnit,
-                                    quantityUsed = usedQuantity,
-                                    currentStock = ingredient.RawMaterial.CurrentStock,
-                                    totalCost = usedCost
-                                };
-                            }
+                                MaterialId = ingredient.RawMaterialId,
+                                MaterialName = ingredient.RawMaterial.Name,
+                                Unit = ingredient.RawMaterial.Unit,
+                                CostPerUnit = ingredient.RawMaterial.CostPerUnit,
+                                QuantityUsed = usedQuantity,
+                                CurrentStock = ingredient.RawMaterial.CurrentStock,
+                                TotalCost = usedCost
+                            };
                         }
                     }
                 }
             }
 
+            var materialsUsed = materialUsageDict.Values.Select(m => new
+            {
+                m.MaterialId,
+                m.MaterialName,
+                m.Unit,
+                m.CostPerUnit,
+                m.QuantityUsed,
+                m.CurrentStock,
+                m.TotalCost
+            }).ToList();
+
             return Ok(new
             {
                 startDate = start.ToString("yyyy-MM-dd"),
                 endDate = end.ToString("yyyy-MM-dd"),
-                materialsUsed = materialUsage.Values.ToList(),
-                totalMaterialCost = materialUsage.Values.Sum(m => m.totalCost)
+                materialsUsed,
+                totalMaterialCost = materialUsageDict.Values.Sum(m => m.TotalCost)
             });
         }
 
@@ -979,5 +1017,28 @@ namespace FoodE_Backend.Controllers
     public class UpdateUserRoleRequest
     {
         public string Role { get; set; } = string.Empty;
+    }
+
+    // Helper class for profit breakdown
+    public class ItemBreakdownItem
+    {
+        public int FoodItemId { get; set; }
+        public string FoodItemName { get; set; } = string.Empty;
+        public int QuantitySold { get; set; }
+        public decimal Revenue { get; set; }
+        public decimal Cost { get; set; }
+        public decimal Profit { get; set; }
+    }
+
+    // Helper class for material usage
+    public class MaterialUsageItem
+    {
+        public int MaterialId { get; set; }
+        public string MaterialName { get; set; } = string.Empty;
+        public string Unit { get; set; } = string.Empty;
+        public decimal CostPerUnit { get; set; }
+        public decimal QuantityUsed { get; set; }
+        public decimal CurrentStock { get; set; }
+        public decimal TotalCost { get; set; }
     }
 }

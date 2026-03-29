@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { User, Phone, MapPin, MessageCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -19,8 +18,6 @@ const Checkout = () => {
   });
 
   const [paymentMethod, setPaymentMethod] = useState('cod'); // cod, bkash, nagad, rocket, advance
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -49,34 +46,6 @@ const Checkout = () => {
     return methods[paymentMethod] || 'Cash on Delivery';
   };
 
-  const generateWhatsAppMessage = () => {
-    let message = `🍔 *New Order from ফুড-ই*\n\n`;
-    message += `👤 *Customer Details:*\n`;
-    message += `Name: ${formData.name}\n`;
-    message += `Phone: ${formData.phone}\n`;
-    message += `Address: ${formData.address}\n\n`;
-    
-    message += `📦 *Order Items:*\n`;
-    cartItems.forEach((item, index) => {
-      message += `${index + 1}. ${item.name} x${item.quantity} = ৳${item.price * item.quantity}\n`;
-    });
-    
-    message += `\n💰 *Total: ৳${getTotalPrice()}*\n`;
-    message += `💳 *Payment Method: ${getPaymentMethodName()}*\n`;
-    
-    if (paymentMethod === 'advance') {
-      message += `\n⚠️ *Advance payment required before delivery*\n`;
-      message += `Please send payment to:\n`;
-      message += `bKash/Nagad/Rocket: 01XXX-XXXXXX\n`;
-    }
-    
-    if (formData.notes) {
-      message += `\n📝 *Special Notes:*\n${formData.notes}`;
-    }
-    
-    return encodeURIComponent(message);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -85,8 +54,13 @@ const Checkout = () => {
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    // Validate cart items against prepared stock before submitting
+    for (const item of cartItems) {
+      if (item.quantity > item.preparedStock) {
+        alert(`❌ Cannot order ${item.quantity} of "${item.name}". Only ${item.preparedStock} available in stock. Please adjust your cart.`);
+        return;
+      }
+    }
 
     try {
       // Create order through backend API - use PascalCase for C# backend
@@ -120,14 +94,10 @@ const Checkout = () => {
           navigate('/track');
         }, 1000);
       } else {
-        setError(result.error || 'Failed to place order');
         alert('❌ ' + (result.error || 'Failed to place order. Please try again.'));
       }
-    } catch (err) {
-      setError('An error occurred while placing the order');
+    } catch {
       alert('❌ An error occurred while placing the order. Please try again.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -136,29 +106,20 @@ const Checkout = () => {
   }
 
   return (
-    <motion.div
+    <div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="min-h-screen pt-20 pb-16"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        <motion.h1
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-4xl md:text-5xl font-black mb-8 text-center"
-        >
+        <h1 className="text-4xl md:text-5xl font-black mb-8 text-center">
           Complete Your <span className="gradient-text">Order</span>
         </motion.h1>
 
         <div className="grid md:grid-cols-[1.2fr,0.8fr] gap-8">
           {/* Column 1: Form */}
-          <motion.div
-            initial={{ x: -30, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-6"
-          >
+          <div className="space-y-6">
             <div className="glass p-6 rounded-2xl">
               <h2 className="text-2xl font-bold mb-6 flex items-center">
                 <User className="mr-3 text-brand" />
@@ -373,11 +334,7 @@ const Checkout = () => {
 
                     {/* Payment Instructions */}
                     {paymentMethod === 'advance' && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30"
-                      >
+                      <div className="p-4 rounded-xl bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
                         <p className="text-sm font-bold text-yellow-300 mb-2 flex items-center">
                           <span className="mr-2">⚠️</span>
                           Payment Instructions
@@ -414,13 +371,7 @@ const Checkout = () => {
               <div className="p-4 max-h-72 overflow-y-auto">
                 <div className="space-y-3">
                   {cartItems.map((item, index) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-start justify-between py-3 border-b border-white/5 last:border-0"
-                    >
+                    <div className="flex items-start justify-between py-3 border-b border-white/5 last:border-0">
                       <div className="flex-1 pr-3">
                         <div className="flex items-center space-x-2">
                           <span className="flex items-center justify-center w-6 h-6 rounded bg-brand/20 text-brand text-xs font-bold">
@@ -499,10 +450,7 @@ const Checkout = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </div>
-    </motion.div>
+          </div>
   );
 };
 
