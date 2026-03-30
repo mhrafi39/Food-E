@@ -126,9 +126,18 @@ namespace FoodE_Backend.Controllers
             Console.WriteLine($"Payment: {request.PaymentMethod}");
             Console.WriteLine($"Items Count: {request.Items.Count}");
 
+            // Get the authenticated user ID if available
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            int? userId = null;
+            if (int.TryParse(userIdClaim, out int parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+
             // Create order
             var order = new Order
             {
+                UserId = userId,
                 CustomerName = request.CustomerName,
                 Email = request.Email ?? "",
                 Phone = request.Phone,
@@ -209,6 +218,22 @@ namespace FoodE_Backend.Controllers
 
             Console.WriteLine($"Order saved with ID: {order.Id}");
             Console.WriteLine($"=== END ORDER REQUEST ===");
+
+            // Create notification for the user if they are authenticated
+            if (userId.HasValue)
+            {
+                var notification = new Notification
+                {
+                    UserId = userId.Value,
+                    Message = $"Your order is placed successfully. Order #: {order.Id}",
+                    Type = "order",
+                    RelatedOrderId = order.Id,
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                };
+                _context.Notifications.Add(notification);
+                await _context.SaveChangesAsync();
+            }
 
             return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, new
             {

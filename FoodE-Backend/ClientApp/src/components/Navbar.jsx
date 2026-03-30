@@ -1,16 +1,74 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { ShoppingCart, Menu, X, User, LogOut, Bell } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 /* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationPanel from './NotificationPanel';
+import { api } from '../utils/api';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { getTotalItems, setIsCartOpen } = useCart();
   const { user, logout, isAuthenticated } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    // Only fetch if user is authenticated AND we have a token
+    const token = localStorage.getItem('food-e-token');
+    if (isAuthenticated && token) {
+      fetchUnreadCount();
+      // Check every 10 seconds for new notifications instead of 30
+      const interval = setInterval(fetchUnreadCount, 10000);
+
+      // Listen for order placement event to immediately refresh notifications
+      const handleOrderPlaced = () => {
+        console.log('Order placed event received, refreshing notifications...');
+        fetchUnreadCount();
+      };
+
+      window.addEventListener('orderPlaced', handleOrderPlaced);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('orderPlaced', handleOrderPlaced);
+      };
+    } else {
+      // Reset unread count if not authenticated
+      setUnreadCount(0);
+    }
+  }, [isAuthenticated]);
+
+  // Also refresh when notification panel opens
+  useEffect(() => {
+    if (isNotificationOpen && isAuthenticated) {
+      fetchUnreadCount();
+    }
+  }, [isNotificationOpen, isAuthenticated]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const token = localStorage.getItem('food-e-token');
+      // Double-check token exists before making request
+      if (!token) {
+        console.log('No token available for unread count check');
+        setUnreadCount(0);
+        return;
+      }
+      const result = await api.getUnreadCount();
+      if (result.success) {
+        setUnreadCount(result.data.unreadCount || 0);
+      } else if (result.error) {
+        console.log('Failed to fetch unread count:', result.error);
+        // Only log, don't set error state as 401 is expected when not auth
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -76,6 +134,19 @@ const Navbar = () => {
                       title="Logout"
                     >
                       <LogOut className="w-5 h-5" />
+                    </button>
+                    {/* Notification Bell */}
+                    <button
+                      onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                      className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+                      title="Notifications"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
                     </button>
                   </div>
               ) : (
@@ -223,6 +294,14 @@ const Navbar = () => {
           </>
         )}
       </AnimatePresence>
+
+      {/* Notification Panel */}
+      <NotificationPanel 
+        isOpen={isNotificationOpen} 
+        onClose={() => setIsNotificationOpen(false)}
+        onUnreadCountChange={setUnreadCount}
+        isAuthenticated={isAuthenticated}
+      />
     </>
   );
 };

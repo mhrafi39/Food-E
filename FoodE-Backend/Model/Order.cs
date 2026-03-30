@@ -3,6 +3,7 @@ namespace FoodE_Backend.Model
     public class Order
     {
         public int Id { get; set; }
+        public int? UserId { get; set; }
         public string CustomerName { get; set; } = "";
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
@@ -13,6 +14,7 @@ namespace FoodE_Backend.Model
         public string Status { get; set; } = "Pending";
         public DateTime OrderDate { get; set; } = DateTime.Now;
         public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public User? User { get; set; }
     }
 
     public class OrderItem

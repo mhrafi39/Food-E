@@ -69,6 +69,26 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ status: 'Cancelled' }),
     }),
+
+  // Notifications (authenticated)
+  getNotifications: () => apiRequest('/notifications'),
+  getUnreadCount: () => apiRequest('/notifications/unread-count'),
+  markNotificationAsRead: (id) =>
+    apiRequest(`/notifications/${id}/read`, {
+      method: 'PUT',
+    }),
+  markAllNotificationsAsRead: () =>
+    apiRequest('/notifications/mark-all-read', {
+      method: 'PUT',
+    }),
+  deleteNotification: (id) =>
+    apiRequest(`/notifications/${id}`, {
+      method: 'DELETE',
+    }),
+  deleteAllNotifications: () =>
+    apiRequest('/notifications/delete-all', {
+      method: 'DELETE',
+    }),
 };
 
 export default api;

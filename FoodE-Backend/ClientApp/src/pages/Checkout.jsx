@@ -90,6 +90,10 @@ const Checkout = () => {
         // Clear cart after order
         clearCart();
 
+        // Refresh notification badge after order is placed
+        // Dispatch a custom event to notify navbar about new notification
+        window.dispatchEvent(new Event('orderPlaced'));
+
         // Redirect to track order page after a short delay
         setTimeout(() => {
           navigate('/track');

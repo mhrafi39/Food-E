@@ -17,6 +17,7 @@ namespace FoodE_Backend.Data
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<RecipeIngredient> RecipeIngredients { get; set; }
         public DbSet<MaterialPurchase> MaterialPurchases { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
