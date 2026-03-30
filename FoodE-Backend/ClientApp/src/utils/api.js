@@ -1,4 +1,4 @@
-const API_URL = 'https://localhost:7159/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Get token from localStorage
 const getToken = () => {
@@ -63,6 +63,11 @@ export const api = {
     apiRequest(`/orders/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify(status),
+    }),
+  cancelOrder: (id) =>
+    apiRequest(`/orders/${id}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'Cancelled' }),
     }),
 };
 

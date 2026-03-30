@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import FoodCard from '../components/FoodCard';
 import api from '../utils/api';
+import { motion } from 'framer-motion';
 
 const FoodDetail = () => {
   const { id } = useParams();

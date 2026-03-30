@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using FoodE_Backend.Data;
 using FoodE_Backend.Model;
 
@@ -10,10 +14,39 @@ namespace FoodE_Backend.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(AppDbContext context)
+        public AuthController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var jwtSettings = _configuration.GetSection("Jwt");
+            var secretKey = jwtSettings["SecretKey"];
+            var key = Encoding.ASCII.GetBytes(secretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("email", user.Email), // Include email as a custom claim as well for the backend filter
+                    new Claim(ClaimTypes.Role, user.Role)
+                }),
+                Expires = DateTime.UtcNow.AddMinutes(int.Parse(jwtSettings["ExpirationMinutes"])),
+                Issuer = jwtSettings["Issuer"],
+                Audience = jwtSettings["Audience"],
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
 
         // POST: api/Auth/register
@@ -31,11 +64,13 @@ namespace FoodE_Backend.Controllers
                 Name = request.Name,
                 Email = request.Email,
                 Password = request.Password, // Note: In production, hash this password!
-                Role = "user" // Default role
+                Role = "user", // Default role
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            var token = GenerateJwtToken(user);
 
             return Ok(new
             {
@@ -43,7 +78,7 @@ namespace FoodE_Backend.Controllers
                 name = user.Name,
                 email = user.Email,
                 role = user.Role,
-                token = $"fake-jwt-token-{user.Id}" // Note: Implement real JWT in production
+                token = token
             });
         }
 
@@ -65,13 +100,15 @@ namespace FoodE_Backend.Controllers
                     return Unauthorized(new { message = "Invalid email or password" });
                 }
 
+                var token = GenerateJwtToken(user);
+
                 return Ok(new
                 {
                     userId = user.Id,
                     name = user.Name,
                     email = user.Email,
                     role = user.Role,
-                    token = $"fake-jwt-token-{user.Id}" // Note: Implement real JWT in production
+                    token = token
                 });
             }
             catch (Exception ex)

@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/immutability */
+/* eslint-disable no-unused-vars */
 import { motion } from 'framer-motion';
 import { ShoppingBag, User, Phone, MapPin, CreditCard, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -207,15 +208,15 @@ const AdminOrders = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
+                <div className="space-y-4 flex flex-col">
+                  <div className="flex-1">
+                    <label className="block text-sm font-bold mb-3 text-brand uppercase tracking-wider">
                       Update Status
                     </label>
                     <select
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg bg-black/5 border border-white/10 text-white focus:border-brand focus:outline-none transition-colors [&>option]:bg-dark [&>option]:text-white"
+                      className="w-full px-4 py-3 rounded-lg bg-brand/20 border-2 border-brand text-white font-semibold focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all [&>option]:bg-dark [&>option]:text-white cursor-pointer hover:bg-brand/30"
                     >
                       {statusOptions.map((status) => (
                         <option key={status} value={status}>
@@ -223,6 +224,9 @@ const AdminOrders = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div className="text-xs text-white/60 mt-2">
+                    Click to update order status
                   </div>
                 </div>
               </div>

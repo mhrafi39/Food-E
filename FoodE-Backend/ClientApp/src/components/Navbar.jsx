@@ -3,6 +3,7 @@ import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
@@ -15,7 +16,6 @@ const Navbar = () => {
     { to: '/', label: 'Home' },
     { to: '/menu', label: 'Menu' },
     { to: '/deals', label: 'Deals' },
-    { to: '/track', label: 'Track Order' },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -61,20 +61,23 @@ const Navbar = () => {
             {/* User, Cart & Mobile Menu */}
             <div className="flex items-center space-x-4">
               {/* User Menu - Desktop */}
-              {isAuthenticated ? (
-                <div className="hidden md:flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-white/10">
-                    <User className="w-4 h-4 text-brand" />
-                    <span className="text-sm font-medium">{user.name}</span>
+                {isAuthenticated ? (
+                  <div className="hidden md:flex items-center space-x-3">
+                    <Link
+                      to={user.role === 'admin' ? '/admin/dashboard' : '/profile'}
+                      className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                    >
+                      <User className="w-4 h-4 text-brand" />
+                      <span className="text-sm font-medium">{user.name}</span>
+                    </Link>
+                    <button
+                      onClick={logout}
+                      className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                      title="Logout"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
                   </div>
-                  <button
-                    onClick={logout}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                    title="Logout"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </div>
               ) : (
                 <Link
                   to="/login"
@@ -158,7 +161,7 @@ const Navbar = () => {
 
                 {/* User Info - Mobile */}
                 {isAuthenticated ? (
-                  <div className="mb-6 p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="mb-6 p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full bg-brand flex items-center justify-center">
@@ -179,6 +182,13 @@ const Navbar = () => {
                         <LogOut className="w-5 h-5" />
                       </button>
                     </div>
+                    <Link
+                      to={user.role === 'admin' ? '/admin/dashboard' : '/profile'}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block w-full py-2 px-3 rounded-lg bg-brand/20 text-brand text-center font-semibold text-sm hover:bg-brand/30 transition-colors"
+                    >
+                      {user.role === 'admin' ? 'Admin Dashboard' : 'View Profile'}
+                    </Link>
                   </div>
                 ) : (
                   <Link

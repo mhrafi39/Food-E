@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { LogIn, UserPlus, AlertCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -19,15 +19,17 @@ const Login = () => {
   const location = useLocation();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    // Check role and redirect accordingly
-    if (user?.role === 'admin' || user?.role === 'Admin') {
-      navigate('/admin/dashboard', { replace: true });
-    } else {
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Check role and redirect accordingly
+      if (user?.role === 'admin' || user?.role === 'Admin') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        const from = location.state?.from?.pathname || '/';
+        navigate(from, { replace: true });
+      }
     }
-  }
+  }, [isAuthenticated, user, navigate, location]);
 
   const handleChange = (e) => {
     setFormData({

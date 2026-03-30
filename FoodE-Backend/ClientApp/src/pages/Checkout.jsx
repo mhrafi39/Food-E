@@ -4,6 +4,7 @@ import { User, Phone, MapPin, MessageCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../utils/api';
+import { motion } from 'framer-motion';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -106,14 +107,15 @@ const Checkout = () => {
   }
 
   return (
-    <div
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="min-h-screen pt-20 pb-16"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        <h1 className="text-4xl md:text-5xl font-black mb-8 text-center">
+        <motion.h1 className="text-4xl md:text-5xl font-black mb-8 text-center"
+          initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           Complete Your <span className="gradient-text">Order</span>
         </motion.h1>
 
@@ -343,13 +345,13 @@ const Checkout = () => {
                           <p>Send payment to: <span className="font-bold text-brand">01XXX-XXXXXX</span></p>
                           <p className="text-xs text-white/60">Then share the transaction ID via WhatsApp</p>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </div>
               </form>
             </div>
-          </motion.div>
+                      </div>
 
           {/* Column 2: Order Summary - Foodpanda Style */}
           <motion.div
@@ -391,7 +393,7 @@ const Checkout = () => {
                       <div className="text-right">
                         <p className="font-bold text-brand">৳{item.price * item.quantity}</p>
                       </div>
-                    </motion.div>
+                      </div>
                   ))}
                 </div>
               </div>
@@ -450,7 +452,10 @@ const Checkout = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 

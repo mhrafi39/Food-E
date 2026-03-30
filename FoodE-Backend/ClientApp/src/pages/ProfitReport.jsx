@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, Package, Calendar } from 'lucide-react';
+/* eslint-disable no-unused-vars */
+import { motion } from 'framer-motion';
 import adminApi from '../utils/adminApi';
 import { Line } from 'react-chartjs-2';
 
@@ -49,6 +51,7 @@ const ProfitReport = () => {
 
   useEffect(() => {
     fetchProfitData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   if (loading) {

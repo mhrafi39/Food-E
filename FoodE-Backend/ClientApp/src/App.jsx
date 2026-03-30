@@ -17,6 +17,7 @@ import AdminOrders from './pages/AdminOrders';
 import AdminCustomers from './pages/AdminCustomers';
 import ManageMaterials from './pages/ManageMaterials';
 import ProfitReport from './pages/ProfitReport';
+import UserProfile from './pages/UserProfile';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="deals" element={<Deals />} />
             <Route path="checkout" element={<Checkout />} />
             <Route path="track" element={<TrackOrder />} />
+            <Route path="profile" element={<UserProfile />} />
             <Route path="login" element={<Login />} />
           </Route>
 

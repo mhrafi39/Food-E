@@ -1,5 +1,6 @@
 import { Users, Mail, Phone, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import adminApi from '../utils/adminApi';
 
 const AdminCustomers = () => {
@@ -125,7 +126,7 @@ const AdminCustomers = () => {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

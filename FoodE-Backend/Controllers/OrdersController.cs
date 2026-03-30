@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using FoodE_Backend.Data;
 using FoodE_Backend.Model;
@@ -18,9 +19,31 @@ namespace FoodE_Backend.Controllers
 
         // GET: api/Orders
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<object>>> GetOrders()
         {
+            // Debug: Log all claims present
+            var claims = User.Claims.ToList();
+            System.Console.WriteLine($"Total claims: {claims.Count}");
+            foreach (var claim in claims)
+            {
+                System.Console.WriteLine($"Claim Type: {claim.Type}, Value: {claim.Value}");
+            }
+
+            // Get the authenticated user's email from claims
+            var userEmail = User.FindFirst("email")?.Value ?? 
+                           User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? 
+                           User.FindFirst("sub")?.Value;
+
+            System.Console.WriteLine($"User Email found: {userEmail ?? "NULL"}");
+
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return Unauthorized(new { message = "User not authenticated" });
+            }
+
             var orders = await _context.Orders
+                .Where(o => o.Email.ToLower() == userEmail.ToLower())
                 .Include(o => o.OrderItems)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
@@ -37,6 +60,7 @@ namespace FoodE_Backend.Controllers
                 o.TotalAmount,
                 o.Status,
                 o.OrderDate,
+                createdAt = o.OrderDate,
                 Items = o.OrderItems.Select(oi => new
                 {
                     oi.FoodItemName,
@@ -212,6 +236,48 @@ namespace FoodE_Backend.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // PUT: api/Orders/5/cancel
+        [HttpPut("{id}/cancel")]
+        public async Task<ActionResult<object>> CancelOrder(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Order not found" });
+            }
+
+            // Check if order can be cancelled
+            var cancellableStatuses = new[] { "Pending", "Confirmed", "Preparing" };
+            if (!cancellableStatuses.Contains(order.Status))
+            {
+                return BadRequest(new { message = $"Cannot cancel order with status: {order.Status}" });
+            }
+
+            // Restore prepared stock for all items
+            foreach (var item in order.OrderItems)
+            {
+                var foodItem = await _context.FoodItems.FindAsync(item.FoodItemId);
+                if (foodItem != null)
+                {
+                    foodItem.PreparedStock += item.Quantity;
+                }
+            }
+
+            // Update order status
+            order.Status = "Cancelled";
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Order cancelled successfully",
+                orderId = order.Id,
+                status = order.Status
+            });
         }
 
         // DELETE: api/Orders/5

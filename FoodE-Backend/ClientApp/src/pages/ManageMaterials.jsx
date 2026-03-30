@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit2, Trash2, Package, AlertTriangle, ShoppingCart } from 'lucide-react';
 import adminApi from '../utils/adminApi';
@@ -26,18 +26,19 @@ const ManageMaterials = () => {
     notes: '',
   });
 
-  useEffect(() => {
-    fetchMaterials();
-  }, []);
-
-  const fetchMaterials = async () => {
+  const fetchMaterials = useCallback(async () => {
     setLoading(true);
     const result = await adminApi.getAllMaterials();
     if (result.success) {
       setMaterials(result.data);
     }
     setLoading(false);
-  };
+  }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchMaterials();
+  }, [fetchMaterials]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -408,7 +409,7 @@ const ManageMaterials = () => {
                     value={purchaseData.costPerUnit}
                     onChange={(e) => setPurchaseData({ ...purchaseData, costPerUnit: e.target.value })}
                     className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-brand"
-                    placeholder="0.00"
+                    placeholder="0"
                   />
                 </div>
 
