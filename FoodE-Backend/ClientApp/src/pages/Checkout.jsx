@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { User, Phone, MapPin, MessageCircle, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -106,26 +107,26 @@ const Checkout = () => {
   }
 
   return (
-    <div
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="min-h-screen pt-20 pb-16"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        <h1 className="text-4xl md:text-5xl font-black mb-8 text-center">
+        <motion.h1 className="text-4xl md:text-5xl font-black mb-8 text-center">
           Complete Your <span className="gradient-text">Order</span>
         </motion.h1>
 
         <div className="grid md:grid-cols-[1.2fr,0.8fr] gap-8">
           {/* Column 1: Form */}
-          <div className="space-y-6">
+          <motion.div className="space-y-6">
             <div className="glass p-6 rounded-2xl">
               <h2 className="text-2xl font-bold mb-6 flex items-center">
                 <User className="mr-3 text-brand" />
                 Delivery Information
               </h2>
-              
+
               <form className="space-y-4">
                 {/* Name */}
                 <div>
@@ -347,11 +348,11 @@ const Checkout = () => {
                     )}
                   </div>
                 </div>
-              </form>
-            </div>
-          </motion.div>
+                    </form>
+                  </div>
+                </motion.div>
 
-          {/* Column 2: Order Summary - Foodpanda Style */}
+              {/* Column 2: Order Summary - Foodpanda Style */}
           <motion.div
             initial={{ x: 30, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -371,7 +372,7 @@ const Checkout = () => {
               <div className="p-4 max-h-72 overflow-y-auto">
                 <div className="space-y-3">
                   {cartItems.map((item, index) => (
-                    <div className="flex items-start justify-between py-3 border-b border-white/5 last:border-0">
+                    <div key={index} className="flex items-start justify-between py-3 border-b border-white/5 last:border-0">
                       <div className="flex-1 pr-3">
                         <div className="flex items-center space-x-2">
                           <span className="flex items-center justify-center w-6 h-6 rounded bg-brand/20 text-brand text-xs font-bold">
@@ -391,7 +392,7 @@ const Checkout = () => {
                       <div className="text-right">
                         <p className="font-bold text-brand">৳{item.price * item.quantity}</p>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -450,7 +451,10 @@ const Checkout = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
