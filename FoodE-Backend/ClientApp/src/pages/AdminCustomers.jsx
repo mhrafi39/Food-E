@@ -1,5 +1,6 @@
 import { Users, Mail, Phone, MapPin, Calendar, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import adminApi from '../utils/adminApi';
 
 const AdminCustomers = () => {
@@ -70,7 +71,7 @@ const AdminCustomers = () => {
         {/* Customers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {customers.map((customer, index) => (
-            <div className="glass rounded-2xl p-6">
+            <div key={index} className="glass rounded-2xl p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-full bg-brand/20 flex items-center justify-center">
                   <span className="text-xl font-bold text-brand">
@@ -125,7 +126,7 @@ const AdminCustomers = () => {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

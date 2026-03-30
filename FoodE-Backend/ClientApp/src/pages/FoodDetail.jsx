@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import FoodCard from '../components/FoodCard';
 import api from '../utils/api';

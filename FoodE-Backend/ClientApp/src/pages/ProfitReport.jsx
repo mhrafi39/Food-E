@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, Package, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
 import adminApi from '../utils/adminApi';
 import { Line } from 'react-chartjs-2';
 
