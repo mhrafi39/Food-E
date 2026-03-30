@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Rafi\\source\\repos\\FoodE-Backend\\FoodE-Backend\\FoodE-Backend.csproj": {}
+    "C:\\sd\\FoodE-Backend\\FoodE-Backend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Rafi\\source\\repos\\FoodE-Backend\\FoodE-Backend\\FoodE-Backend.csproj": {
+    "C:\\sd\\FoodE-Backend\\FoodE-Backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Rafi\\source\\repos\\FoodE-Backend\\FoodE-Backend\\FoodE-Backend.csproj",
+        "projectUniqueName": "C:\\sd\\FoodE-Backend\\FoodE-Backend.csproj",
         "projectName": "FoodE-Backend",
-        "projectPath": "C:\\Users\\Rafi\\source\\repos\\FoodE-Backend\\FoodE-Backend\\FoodE-Backend.csproj",
+        "projectPath": "C:\\sd\\FoodE-Backend\\FoodE-Backend.csproj",
         "packagesPath": "C:\\Users\\Rafi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Rafi\\source\\repos\\FoodE-Backend\\FoodE-Backend\\obj\\",
+        "outputPath": "C:\\sd\\FoodE-Backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -58,15 +58,15 @@
               "target": "Package",
               "version": "[10.0.3, )"
             },
-            "Microsoft.EntityFrameworkCore.SqlServer": {
-              "target": "Package",
-              "version": "[10.0.3, )"
-            },
             "Microsoft.EntityFrameworkCore.Tools": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
               "version": "[10.0.3, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[10.0.0, )"
             }
           },
           "imports": [

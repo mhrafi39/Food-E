@@ -1,0 +1,39 @@
+services:
+  # PostgreSQL Database
+  - type: pgsql
+    name: foode-db
+    region: oregon
+    plan: free
+    ipAllowList: []
+
+  # Backend API
+  - type: web
+    name: foode-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: oregon
+    plan: free
+    envVars:
+      - key: DefaultConnection
+        scope: run
+        value: postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT}/${PGDATABASE}
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: AllowedOrigins
+        scope: run
+        value: https://foode-frontend.onrender.com
+    depends_on:
+      - foode-db
+
+  # Frontend Static Site
+  - type: static_site
+    name: foode-frontend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: cd FoodE-Backend/ClientApp && npm install && npm run build
+    staticPublishPath: FoodE-Backend/ClientApp/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://foode-backend.onrender.com
+
