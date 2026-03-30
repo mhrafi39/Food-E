@@ -344,13 +344,10 @@ const Checkout = () => {
                           <p>Send payment to: <span className="font-bold text-brand">01XXX-XXXXXX</span></p>
                           <p className="text-xs text-white/60">Then share the transaction ID via WhatsApp</p>
                         </div>
-                      </motion.div>
+                      </div>
                     )}
                   </div>
                 </div>
-                    </form>
-                  </div>
-                </motion.div>
 
               {/* Column 2: Order Summary - Foodpanda Style */}
           <motion.div
